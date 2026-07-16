@@ -1,0 +1,10 @@
+<style>
+  body {
+    background-image: url('site\images\bg.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+</style>
