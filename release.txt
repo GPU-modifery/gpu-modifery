@@ -1,0 +1,23 @@
+GPU Screen Recorder - Release Announcement
+
+We are excited to introduce GPU Screen Recorder, a sleek and powerful recording experience built for smooth captures and clean performance.
+
+What is it?
+GPU Screen Recorder is a modern screen recording project designed to deliver high-quality recordings with a polished and minimal presentation. It is currently in development and will be officially released soon.
+
+What to expect:
+- Smooth and reliable recording performance
+- Clean, modern interface
+- Easy sharing to your favorite platforms
+- A polished experience built around quality and simplicity
+
+Coming Soon
+This release is being prepared for launch, and more updates will be shared soon.
+
+Screenshots
+- Main landing page preview
+- Hero section with animated title and call-to-action buttons
+- Forest-inspired background and soft visual effects
+- Social links for YouTube and GitHub
+
+Stay tuned for the official release and future updates.
