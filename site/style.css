@@ -8,7 +8,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   color: #f4fff7;
   background:
-    linear-gradient(135deg, rgba(8, 40, 24, 0.9), rgba(22, 92, 45, 0.75)),
+    linear-gradient(135deg, rgba(20, 24, 30, 0.88), rgba(62, 74, 70, 0.72)),
     url('images/bg.png');
   background-size: cover;
   background-repeat: no-repeat;
