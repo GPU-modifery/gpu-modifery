@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>GPU Modifery Dashboard</title>
+</head>
+<body>
+  <main class="dashboard">
+    <!-- Header -->
+    <header class="db-header">
+      <div class="brand">
+        <div class="logo-icon"></div>
+        <div>
+          <h1 class="title">GPU Modifery</h1>
+          <p class="tagline">Hardware Accelerated Recorder</p>
+        </div>
+      </div>
+      <div class="system-status">
+        <span class="badge backend">NVENC Active</span>
+        <span class="badge display-server">Wayland / PipeWire</span>
+      </div>
+    </header>
+
+    <!-- Main Live Screen Preview Box -->
+    <div class="video-preview-container">
+      <video id="preview" autoplay muted playsinline></video>
+      <div class="preview-overlay" id="previewOverlay">
+        <div class="placeholder-msg">Preview Window Offline</div>
+        <p class="placeholder-sub">Click "Start Source" or trigger record to hook display</p>
+      </div>
+      <div class="rec-indicator" id="recIndicator">
+        <span class="live-dot"></span> <span id="timer">00:00:00</span>
+      </div>
+    </div>
+
+    <!-- Quick Configuration Controls -->
+    <section class="controls-grid">
+      <div class="control-group">
+        <label for="captureMode">Capture Target</label>
+        <select id="captureMode">
+          <option value="monitor">All Monitors (Default)</option>
+          <option value="window">Follow Focused Window</option>
+          <option value="portal">Desktop Portal Selection</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="quality">Video Quality</label>
+        <select id="quality">
+          <option value="ultra">Ultra (Visually Lossless)</option>
+          <option value="high" selected>Very High (Recommended)</option>
+          <option value="medium">Medium (Balanced)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="fps">Frame Rate</label>
+        <select id="fps">
+          <option value="60">60 FPS</option>
+          <option value="120">120 FPS</option>
+          <option value="30">30 FPS</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label class="checkbox-container">
+          <input type="checkbox" id="recordAudio" checked>
+          <span class="checkmark"></span>
+          Include System Audio
+        </label>
+      </div>
+    </section>
+
+    <!-- Action Buttons Tray -->
+    <footer class="action-tray">
+      <button class="btn btn-secondary" id="btnSource">Start Source</button>
+      <button class="btn btn-record" id="btnRecord">Record Screen</button>
+      <button class="btn btn-replay" id="btnReplay" disabled>Instant Replay</button>
+    </footer>
+  </main>
+
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: #0b0f0c;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .dashboard {
+      width: min(100%, 640px);
+      background: #121814;
+      border: 1px solid #1f2e24;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .db-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid #1f2e24;
+      padding-bottom: 1rem;
+    }
+
+    .brand { display: flex; gap: 0.75rem; align-items: center; }
+    .logo-icon { width: 12px; height: 12px; background: #2f9d5d; border-radius: 50%; box-shadow: 0 0 10px #2f9d5d; }
+    .title { margin: 0; font-size: 1.2rem; font-weight: 700; color: #fff; }
+    .tagline { margin: 0; font-size: 0.8rem; color: #64748b; }
+    
+    .system-status { display: flex; gap: 0.5rem; }
+    .badge { font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .badge.backend { background: rgba(47, 157, 93, 0.15); color: #4ade80; border: 1px solid rgba(47, 157, 93, 0.3); }
+    .badge.display-server { background: #1e293b; color: #94a3b8; }
+
+    /* Video Frame Setup */
+    .video-preview-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #070a08;
+      border-radius: 8px;
+      border: 1px solid #1f2e24;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    #preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .preview-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #111612 0%, #070a08 100%);
+      color: #475569;
+      text-align: center;
+    }
+
+    .placeholder-msg { font-size: 1rem; font-weight: 600; color: #64748b; margin-bottom: 0.25rem; }
+    .placeholder-sub { font-size: 0.8rem; color: #475569; margin: 0; }
+
+    .rec-indicator {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 0.35rem 0.65rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .live-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: blink 1s infinite; }
+
+    /* Forms & Configuration Toggles */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .control-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .control-group label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
+    
+    select {
+      background: #18221b;
+      border: 1px solid #2d4234;
+      color: #e2e8f0;
+      padding: 0.5rem;
+      border-radius: 6px;
+      outline: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    select:focus { border-color: #2f9d5d; }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      margin-top: 1.25rem;
+      user-select: none;
+    }
+
+    /* Buttons Tray */
+    .action-tray { display: flex; gap: 0.75rem; }
+    .btn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary { background: #1e293b; color: #e2e8f0; }
+    .btn-secondary:hover { background: #334155; }
+    
+    .btn-record { background: #2f9d5d; color: #070a08; }
+    .btn-record:hover { background: #3cb86f; }
+    .btn-record.recording { background: #ef4444; color: #fff; }
+    .btn-record.recording:hover { background: #f87171; }
+
+    .btn-replay { background: #162e20; color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+    .btn-replay:hover:not(:disabled) { background: #1f422e; }
+    .btn-replay:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  </style>
+
+  <!-- Real Web API Engine Injection Logic -->
+  <script>
+    const btnSource = document.getElementById('btnSource');
+    const btnRecord = document.getElementById('btnRecord');
+    const btnReplay = document.getElementById('btnReplay');
+    const videoPreview = document.getElementById('preview');
+    const previewOverlay = document.getElementById('previewOverlay');
+    const recIndicator = document.getElementById('recIndicator');
+    const timerElement = document.getElementById('timer');
+
+    let stream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let startTime = null;
+    let timerInterval = null;
+
+    // Toggle real device Screen / Window Share Capture API
+    async function startSource() {
+      try {
+        const audioSetting = document.getElementById('recordAudio').checked;
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: { ideal: parseInt(document.getElementById('fps').value) } },
+          audio: audioSetting
+        });
+        
+        videoPreview.srcObject = stream;
+        videoPreview.style.display = 'block';
+        previewOverlay.style.display = 'none';
+        btnSource.textContent = "Drop Source";
+        btnSource.style.background = "#475569";
+        
+        stream.getVideoTracks()[0].onended = () => stopSource();
+      } catch (err) {
+        console.error("Capture selection rejected or unavailable: ", err);
+      }
+    }
+
+    function stopSource() {
+      if (videoPreview.srcObject) {
+        let tracks = videoPreview.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+      videoPreview.style.display = 'none';
+      previewOverlay.style.display = 'flex';
+      btnSource.textContent = "Start Source";
+      btnSource.style.background = "#1e293b";
+      if(mediaRecorder && mediaRecorder.state !== 'inactive') stopRecording();
+    }
+
+    btnSource.addEventListener('click', () => {
+      if (!stream || !stream.active) {
+        startSource();
+      } else {
+        stopSource();
+      }
+    });
+
+    // Recording Runtime Engine
+    btnRecord.addEventListener('click', async () => {
+      if (!stream || !stream.active) {
+        await startSource();
+        if (!stream) return; 
+      }
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    function startRecording() {
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+      
+      mediaRecorder.ondataavailable = (e) => {
+if (e.data.size > 0) recordedChunks.push(e.data);};mediaRecorder.onstop = () => {const blob = new Blob(recordedChunks, { type: 'video/webm' });const url = URL.createObjectURL(blob);btnReplay.onclick = () => {const a = document.createElement('a');a.href = url;a.download = gpu-rec-${Date.now()}.webm;a.click();};btnReplay.disabled = false;};mediaRecorder.start();// UI State updatebtnRecord.textContent = "Stop Capture";btnRecord.classList.add('recording');recIndicator.style.display = 'flex';// Timer CorestartTime = Date.now();timerInterval = setInterval(() => {const diff = Date.now() - startTime;const hrs = String(Math.floor(diff / 3600000)).padStart(2, '0');const mins = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');const secs = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');timerElement.textContent = ${hrs}:${mins}:${secs};}, 1000);}function stopRecording() {mediaRecorder.stop();clearInterval(timerInterval);btnRecord.textContent = "Record Screen";btnRecord.classList.remove('recording');recIndicator.style.display = 'none';timerElement.textContent = "00:00:00";}
